@@ -31,6 +31,18 @@ export function redirectUri(): string {
   return new URL('/api/auth/oidc/callback', serverConfig().APP_URL).toString();
 }
 
+/**
+ * The callback URL to hand to the token exchange. It must equal the
+ * redirect_uri sent when signing in, so it is rebuilt from `base` with only
+ * the query copied: the request path may carry a trailing slash (trailingSlash
+ * redirects) and the request origin may be an internal one behind a proxy.
+ */
+export function callbackUrl(base: string, requestUrl: string): URL {
+  const url = new URL(base);
+  url.search = new URL(requestUrl).search;
+  return url;
+}
+
 export const OIDC_COOKIE = 'iq_oidc';
 
 /** Is this email allowed by OIDC_ALLOWED_DOMAINS? */

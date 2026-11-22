@@ -2,8 +2,8 @@ apiVersion: v2
 name: inquizitive
 description: Open-source study app (flashcards, learn mode, tests, spaced repetition) for schools and universities.
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.1
+appVersion: "0.1.1"
 license: MIT
 keywords: [education, flashcards, spaced-repetition, study]
 home: https://github.com/isaiah-harville/inquizitive

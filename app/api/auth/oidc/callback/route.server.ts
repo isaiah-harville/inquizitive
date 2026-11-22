@@ -1,7 +1,14 @@
 import { cookieHeader, provisionUser, readCookie, startSession } from '@/server/auth';
 import { serverConfig } from '@/server/config';
 import { serverDb } from '@/server/db';
-import { claimGrantsAdmin, emailAllowed, OIDC_COOKIE, oidcConfig } from '@/server/oidc';
+import {
+  callbackUrl,
+  claimGrantsAdmin,
+  emailAllowed,
+  OIDC_COOKIE,
+  oidcConfig,
+  redirectUri,
+} from '@/server/oidc';
 import { ApiError } from '@/services/api/core';
 import { findUserByExternalId, updateUserProfile } from '@/services/repositories/users';
 
@@ -22,8 +29,7 @@ export async function GET(req: Request) {
     const checks = JSON.parse(raw) as { verifier: string; state: string; nonce: string };
     const client = await import('openid-client');
     const config = await oidcConfig();
-    // Rebuild the callback URL on the public origin (we may be behind a proxy).
-    const current = new URL(new URL(req.url).pathname + new URL(req.url).search, c.APP_URL);
+    const current = callbackUrl(redirectUri(), req.url);
     const tokens = await client.authorizationCodeGrant(config, current, {
       pkceCodeVerifier: checks.verifier,
       expectedState: checks.state,
