@@ -14,6 +14,15 @@ With PostgreSQL and S3 the app keeps no local state. Sessions live in the databa
 so any replica can serve any request and you can scale horizontally. Migrations run
 at startup under a PostgreSQL advisory lock, so replicas can start together.
 
+## Images and chart
+
+Every release publishes:
+
+- `ghcr.io/isaiah-harville/inquizitive:<version>` (also `latest`, `<major>.<minor>`), for amd64 and arm64.
+  Every push to `main` publishes `:main` and `:sha-<commit>`.
+- The Helm chart at `oci://ghcr.io/isaiah-harville/charts/inquizitive`.
+- Desktop builds for macOS, Windows and Linux on the GitHub release.
+
 ## Docker
 
 Single container, SQLite:
@@ -21,7 +30,7 @@ Single container, SQLite:
 ```bash
 docker run -d --name inquizitive -p 3000:3000 -v inquizitive-data:/data \
   -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD='a-long-password' \
-  inquizitive
+  ghcr.io/isaiah-harville/inquizitive:latest
 ```
 
 Full stack (app + PostgreSQL 17 + SeaweedFS S3):
@@ -35,11 +44,11 @@ docker compose up -d --build
 
 ```bash
 # Simple: one replica, SQLite on a PersistentVolume
-helm install study chart/inquizitive --set appUrl=https://study.example.edu \
+helm install study oci://ghcr.io/isaiah-harville/charts/inquizitive --set appUrl=https://study.example.edu \
   --set ingress.enabled=true --set ingress.hosts[0].host=study.example.edu
 
 # Scalable: PostgreSQL + S3, autoscaling
-helm install study chart/inquizitive \
+helm install study oci://ghcr.io/isaiah-harville/charts/inquizitive \
   --set appUrl=https://study.example.edu \
   --set database.existingSecret=inquizitive-db \
   --set storage.driver=s3 --set storage.s3.endpoint=https://s3.example.edu \
@@ -77,7 +86,7 @@ Uploads are checked by their real file type (PNG, JPEG, GIF, WebP, AVIF), capped
 | `AUTH_MODE` | Use it for |
 |---|---|
 | `local` (default) | Username + password accounts. The first account becomes admin. `ALLOW_SIGNUP=true` lets anyone register; otherwise admins add users on the Admin page. `ADMIN_USERNAME`/`ADMIN_PASSWORD` create an admin at first start. |
-| `oidc` | Single sign-on with any OpenID Connect provider (Keycloak, Microsoft Entra ID, Google Workspace, Authentik, Okta…). Needs `APP_URL`, `OIDC_ISSUER`, `OIDC_CLIENT_ID` and usually `OIDC_CLIENT_SECRET`. Register the redirect URI `APP_URL/api/auth/oidc/callback`. Limit who can sign in with `OIDC_ALLOWED_DOMAINS`, and grant admin from a claim with `OIDC_ADMIN_CLAIM` + `OIDC_ADMIN_VALUE`. |
+| `oidc` | Single sign-on with any OpenID Connect provider (Keycloak, Microsoft Entra ID, Google Workspace, Authentik, Okta…). Needs `APP_URL`, `OIDC_ISSUER` and `OIDC_CLIENT_ID`. Set `OIDC_CLIENT_SECRET` for a confidential client; leave it empty for a public client (PKCE only). Register the redirect URI `APP_URL/api/auth/oidc/callback`. Limit who can sign in with `OIDC_ALLOWED_DOMAINS`, and grant admin from a claim with `OIDC_ADMIN_CLAIM` + `OIDC_ADMIN_VALUE`. |
 | `proxy` | Behind an authenticating reverse proxy (oauth2-proxy, Authelia, Pomerium…) that sets `PROXY_USER_HEADER` (default `X-Forwarded-User`). **Only expose the app through that proxy**, because the header is trusted. |
 | `none` | No sign-in; everyone shares one library. Personal or LAN use only. |
 

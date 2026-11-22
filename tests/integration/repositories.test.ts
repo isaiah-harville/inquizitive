@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ReviewRating } from '@/domain/models';
 import { createScheduler } from '@/domain/scheduling/fsrs';
 import type { ScriptableDriver } from '@/services/db/driver';
-import { migrate, schemaVersion } from '@/services/db/migrate';
+import { LATEST_SCHEMA_VERSION, migrate, schemaVersion } from '@/services/db/migrate';
 import * as cards from '@/services/repositories/cards';
 import * as folders from '@/services/repositories/folders';
 import * as progress from '@/services/repositories/progress';
@@ -40,8 +40,9 @@ async function makeSet(title = 'Spanish', n = 3, owner = ME) {
 
 describe('migrations', () => {
   it('applies once and reports the version', async () => {
-    expect(await schemaVersion(db)).toBe(1);
-    expect(await migrate(db)).toBe(1);
+    expect(await schemaVersion(db)).toBe(LATEST_SCHEMA_VERSION);
+    expect(LATEST_SCHEMA_VERSION).toBeGreaterThanOrEqual(2);
+    expect(await migrate(db)).toBe(LATEST_SCHEMA_VERSION);
   });
 });
 

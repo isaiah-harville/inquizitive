@@ -32,14 +32,15 @@ Builds: `bun run build:web` (static export for desktop), `bun run build:server` 
 | `server/` | Server-only config, DB and blob-store factories, auth, RPC dispatch | Be imported from client components |
 | `app/**/route.server.ts` | Server route handlers (excluded from the static export by `pageExtensions`) | Be named `route.ts` |
 | `migrations/{sqlite,postgres}/` | Schema, one numbered file per change per dialect | Be edited after release |
-| `src-tauri/` | Desktop shell: SQLite bridge commands, sandboxed media files | Grow commands beyond SQL + media without an ADR |
+| `services/sync/` | Sync manifest, row export/apply, engine, HTTP transport | Apply a row owned by another user |
+| `src-tauri/` | Desktop shell: SQLite bridge commands, sandboxed media files, HTTP plugin for sync | Grow commands beyond SQL + media without an ADR |
 | `components/ui/` | Vendored shadcn/ui (`bunx shadcn@latest add <name>`) | Be hand-written |
 
 ## Invariants
 
 These hold the system together. A change that breaks one needs an ADR in `docs/adr/` first.
 
-1. **No external network requests.** No telemetry, CDNs, remote fonts or remote images. The e2e suite fails on any request off localhost.
+1. **No external network requests.** No telemetry, CDNs, remote fonts or remote images. The only exception is desktop sync to the server the user configures ([ADR 0006](docs/adr/0006-desktop-server-sync.md)). The e2e suite fails on any request off localhost.
 2. **User content renders only through `<RichText>`.** Raw HTML is skipped; external images and links are never loaded.
 3. **Imports never overwrite.** Existing ids are kept only when free; everything else becomes a copy.
 4. **Authorization lives in `createCoreApi`.** Every method checks ownership/visibility; every RPC method has a zod schema in `server/rpc.ts`.
@@ -53,6 +54,8 @@ These hold the system together. A change that breaks one needs an ADR in `docs/a
 **Change the schema.** Add `migrations/sqlite/NNNN_*.sql` and `migrations/postgres/NNNN_*.sql`, register the SQLite file in `MIGRATIONS` in `src-tauri/src/database/mod.rs`, run `bun run prepare:assets` to regenerate `services/db/migrations.gen.ts`, then `bun run test`, `bun run test:pg` and `bun run test:rust`.
 
 **Add a study algorithm or question type.** Put the logic in `domain/` as pure functions taking a seed, unit-test it in `tests/unit/`, then wire the UI in `app/(study)/study/`.
+
+**Change a synced table.** Make sure every mutation bumps `updated_at`, add the column to the row schema in `services/sync/rows.ts` and to `exportRows`/`applyRows` in `services/sync/store.ts`, and extend `tests/integration/sync.test.ts`.
 
 **Add a server setting.** Add it to the schema in `server/config.ts` (the only place that reads `process.env` at runtime), `.env.example`, `docs/self-hosting.md` and `chart/inquizitive/values.yaml`.
 

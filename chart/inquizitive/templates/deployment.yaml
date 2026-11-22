@@ -47,10 +47,6 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "inquizitive.fullname" . }}
-            {{- with .Values.database.existingSecret }}
-            - secretRef:
-                name: {{ . }}
-            {{- end }}
             {{- with .Values.storage.s3.existingSecret }}
             - secretRef:
                 name: {{ . }}
@@ -60,7 +56,13 @@ spec:
                 name: {{ . }}
             {{- end }}
           env:
-            {{- if and (not .Values.database.url) (not .Values.database.existingSecret) }}
+            {{- if .Values.database.existingSecret }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: {{ .Values.database.existingSecretKey }}
+            {{- else if not .Values.database.url }}
             - name: DATABASE_URL
               value: sqlite:/data/inquizitive.db
             {{- end }}

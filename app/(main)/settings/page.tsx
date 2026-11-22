@@ -6,9 +6,11 @@ import {
   Download,
   HardDrive,
   Info,
+  Laptop,
   LogOut,
   Monitor,
   Moon,
+  RefreshCw,
   Sun,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -21,6 +23,8 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { exportArchive } from '@/features/import-export/export-actions';
 import { LibraryImport } from '@/features/import-export/library-import';
+import { DesktopSync } from '@/features/sync/desktop-sync';
+import { DeviceTokens } from '@/features/sync/device-tokens';
 import { useAction, useApiQuery } from '@/hooks/use-api';
 import { isMultiUser, useSession } from '@/hooks/use-session';
 
@@ -198,6 +202,26 @@ export default function SettingsPage() {
             Saves a .zip you can keep anywhere, restore later, or open on another device or server.
           </p>
         </Section>
+
+        {session?.backend === 'desktop' && (
+          <Section
+            icon={RefreshCw}
+            title="Sync with a server"
+            description="Keep this computer and your account on an Inquizitive server in step."
+          >
+            <DesktopSync />
+          </Section>
+        )}
+
+        {session?.backend === 'server' && (
+          <Section
+            icon={Laptop}
+            title="Desktop sync"
+            description="Let the Inquizitive desktop app sync your library with this server."
+          >
+            <DeviceTokens />
+          </Section>
+        )}
 
         <Section
           icon={Archive}

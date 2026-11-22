@@ -3,7 +3,8 @@
 # Data lives in /data by default (SQLite + images); point DATABASE_URL at
 # PostgreSQL and STORAGE_DRIVER=s3 at object storage to run several replicas.
 
-FROM node:24-alpine AS build
+# The build output is plain JavaScript, so build once on the runner's own platform.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 COPY --from=oven/bun:1.4-alpine /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -13,6 +14,9 @@ COPY . .
 RUN bun run build:server
 
 FROM node:24-alpine AS runtime
+LABEL org.opencontainers.image.source="https://github.com/isaiah-harville/inquizitive" \
+      org.opencontainers.image.description="Inquizitive study app server" \
+      org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

@@ -1,6 +1,6 @@
 import type { User } from '@/domain/models';
 import { ApiError } from '@/services/api/core';
-import { checkOrigin, currentUser } from './auth';
+import { bearerToken, checkOrigin, currentUser } from './auth';
 import { serverConfig } from './config';
 
 export function json(data: unknown, init: ResponseInit = {}): Response {
@@ -26,7 +26,9 @@ export async function withUser(
   fn: (user: User) => Promise<Response>,
 ): Promise<Response> {
   try {
-    if (req.method !== 'GET' && req.method !== 'HEAD' && !checkOrigin(req)) {
+    // Bearer-token requests carry no ambient credentials, so they can't be forged cross-site.
+    const unsafe = req.method !== 'GET' && req.method !== 'HEAD';
+    if (unsafe && !bearerToken(req) && !checkOrigin(req)) {
       throw new ApiError('Cross-site request blocked', 403);
     }
     const user = await currentUser(req);

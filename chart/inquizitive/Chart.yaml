@@ -6,3 +6,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 license: MIT
 keywords: [education, flashcards, spaced-repetition, study]
+home: https://github.com/isaiah-harville/inquizitive
+sources:
+  - https://github.com/isaiah-harville/inquizitive
+icon: https://raw.githubusercontent.com/isaiah-harville/inquizitive/main/public/icon.svg

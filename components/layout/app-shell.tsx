@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Kbd } from '@/components/ui/kbd';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { useAutoSync } from '@/features/sync/use-auto-sync';
 import { useApiQuery } from '@/hooks/use-api';
 import { isMultiUser, useSession } from '@/hooks/use-session';
 import { endOfDay } from '@/lib/format';
@@ -225,6 +226,7 @@ function TopBar({
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useAutoSync();
   const [searchOpen, setSearchOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

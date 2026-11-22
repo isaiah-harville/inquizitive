@@ -38,6 +38,7 @@
     ],
     "category": "Education",
     "shortDescription": "Offline-first study app",
-    "copyright": "MIT License"
+    "copyright": "MIT License",
+    "homepage": "https://github.com/isaiah-harville/inquizitive"
   }
 }

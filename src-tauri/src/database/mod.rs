@@ -14,8 +14,10 @@ use crate::error::{AppError, AppResult};
 
 /// Ordered list of `(version, sql)` migrations. Append only; never edit a
 /// migration that has shipped.
-pub const MIGRATIONS: &[(u32, &str)] =
-    &[(1, include_str!("../../../migrations/sqlite/0001_init.sql"))];
+pub const MIGRATIONS: &[(u32, &str)] = &[
+    (1, include_str!("../../../migrations/sqlite/0001_init.sql")),
+    (2, include_str!("../../../migrations/sqlite/0002_sync.sql")),
+];
 
 pub fn latest_version() -> u32 {
     MIGRATIONS.last().map(|(v, _)| *v).unwrap_or(0)

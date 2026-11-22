@@ -16,6 +16,7 @@ storage and single sign-on.
   (tab, comma, dash, custom…), CSV/TSV with column mapping, or full library archives
 - **Own your data:** export a set or your whole library (with images and history) to a
   versioned ZIP; restore without ever overwriting
+- **Desktop ↔ server sync:** link the desktop app to your account on a server with a device token
 - **Search, folders, tags, stats, streaks, light and dark themes**
 
 ## Quick start
@@ -34,8 +35,7 @@ Requires [Bun](https://bun.sh), [Rust](https://rustup.rs) and the
 ### Self-hosted server (single container)
 
 ```bash
-docker build -t inquizitive .
-docker run -d -p 3000:3000 -v inquizitive-data:/data inquizitive
+docker run -d -p 3000:3000 -v inquizitive-data:/data ghcr.io/isaiah-harville/inquizitive:latest
 ```
 
 Open <http://localhost:3000>. The first account you create becomes the administrator.
@@ -47,7 +47,8 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-For Kubernetes there's a Helm chart in [`chart/inquizitive`](chart/inquizitive).
+For Kubernetes: `helm install study oci://ghcr.io/isaiah-harville/charts/inquizitive` (source in [`chart/inquizitive`](chart/inquizitive)).
+Desktop builds are attached to each [GitHub release](https://github.com/isaiah-harville/inquizitive/releases).
 Configuration, auth providers and scaling are covered in
 [docs/self-hosting.md](docs/self-hosting.md).
 
@@ -66,6 +67,7 @@ bun run dev                # http://localhost:3000 (server mode, SQLite in ./dat
 | [docs/development.md](docs/development.md) | Local setup, testing, building and packaging |
 | [docs/self-hosting.md](docs/self-hosting.md) | Docker, Kubernetes, PostgreSQL, S3, OIDC / SSO |
 | [docs/data-format.md](docs/data-format.md) | Import formats and the portable archive format |
+| [docs/sync.md](docs/sync.md) | Syncing the desktop app with a server |
 | [docs/adr/](docs/adr) | Architecture decision records |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 | [examples/](examples) | Sample files to try the importer with |
@@ -73,7 +75,7 @@ bun run dev                # http://localhost:3000 (server mode, SQLite in ./dat
 ## Privacy
 
 Inquizitive makes no network requests of its own: no telemetry, analytics, CDNs or
-remote fonts. Imported content is rendered safely: raw HTML is never executed, and
+remote fonts. The desktop app only goes online to sync with a server you choose. Imported content is rendered safely: raw HTML is never executed, and
 external images or links in cards are never loaded. The end-to-end tests fail if the
 app tries to reach any host other than itself.
 
@@ -86,8 +88,8 @@ app tries to reach any host other than itself.
 - **Nested folders:** the schema supports `parent_id`; the UI shows one level.
 - **Passwords:** users can't change their own password yet (admins can reset it).
 - **Image editing:** one image per card side; no cropping or occlusion.
-- **Sync** between desktop and server isn't implemented. You can move data with
-  archive export and import, in both directions.
+- **Sync** compares edit times from both machines; keep clocks set automatically.
+  Unfinished study sessions don't sync.
 - **Rate limiting** of sign-in attempts should be done at the reverse proxy or ingress
   for now.
 - **Accessibility:** keyboard navigation and labels throughout; a full screen-reader
