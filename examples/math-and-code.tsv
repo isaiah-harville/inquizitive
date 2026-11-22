@@ -1,0 +1,7 @@
+Quadratic formula	$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+Pythagorean theorem	$a^2 + b^2 = c^2$
+Derivative of $\sin x$	$\cos x$
+Euler's identity	$e^{i\pi} + 1 = 0$
+**Big-O** of binary search	$O(\log n)$
+Python list comprehension	`[x * 2 for x in items]`
+JavaScript strict equality	`===` compares value **and** type

@@ -1,0 +1,67 @@
+{
+  "format": "inquizitive.library",
+  "version": 1,
+  "exportedAt": 1795300000000,
+  "folders": [
+    { "id": "6a0c8f5e-3a4e-4c1e-9a52-0f3c1b7e2d10", "name": "Examples", "parentId": null }
+  ],
+  "sets": [
+    {
+      "id": "3c1f4a2b-8d7e-4f60-b5a9-1e2d3c4b5a60",
+      "folderId": "6a0c8f5e-3a4e-4c1e-9a52-0f3c1b7e2d10",
+      "title": "World capitals",
+      "description": "A small example set exported from Inquizitive.",
+      "tags": ["geography", "example"],
+      "cards": [
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000001",
+          "front": "France",
+          "back": "Paris",
+          "explanation": "",
+          "acceptedAnswers": [],
+          "media": []
+        },
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000002",
+          "front": "Japan",
+          "back": "Tokyo",
+          "explanation": "",
+          "acceptedAnswers": [],
+          "media": []
+        },
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000003",
+          "front": "Australia",
+          "back": "Canberra",
+          "explanation": "Not Sydney!",
+          "acceptedAnswers": [],
+          "media": []
+        },
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000004",
+          "front": "Canada",
+          "back": "Ottawa",
+          "explanation": "",
+          "acceptedAnswers": [],
+          "media": []
+        },
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000005",
+          "front": "Peru",
+          "back": "Lima",
+          "explanation": "",
+          "acceptedAnswers": ["Ciudad de los Reyes"],
+          "media": []
+        },
+        {
+          "id": "a1b2c3d4-0001-4000-8000-000000000006",
+          "front": "Kenya",
+          "back": "Nairobi",
+          "explanation": "",
+          "acceptedAnswers": [],
+          "media": []
+        }
+      ]
+    }
+  ]
+}
