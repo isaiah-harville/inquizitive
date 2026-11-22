@@ -1,0 +1,165 @@
+{{- $volume := include "inquizitive.needsVolume" . -}}
+{{- if and (gt (int .Values.replicaCount) 1) $volume (not .Values.persistence.existingClaim) }}
+{{- fail "replicaCount > 1 needs database.url (PostgreSQL) and storage.driver=s3, or a ReadWriteMany persistence.existingClaim" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "inquizitive.fullname" . }}
+  labels:
+    {{- include "inquizitive.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  {{- if $volume }}
+  strategy:
+    type: Recreate   # a single SQLite writer must not overlap during upgrades
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "inquizitive.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "inquizitive.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: inquizitive
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: {{ include "inquizitive.fullname" . }}
+            {{- with .Values.database.existingSecret }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+            {{- with .Values.storage.s3.existingSecret }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+            {{- with .Values.auth.existingSecret }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          env:
+            {{- if and (not .Values.database.url) (not .Values.database.existingSecret) }}
+            - name: DATABASE_URL
+              value: sqlite:/data/inquizitive.db
+            {{- end }}
+            - name: DATABASE_POOL_SIZE
+              value: {{ .Values.database.poolSize | quote }}
+            - name: STORAGE_DRIVER
+              value: {{ .Values.storage.driver | quote }}
+            - name: STORAGE_DIR
+              value: /data/media
+            {{- if eq .Values.storage.driver "s3" }}
+            - name: S3_ENDPOINT
+              value: {{ .Values.storage.s3.endpoint | quote }}
+            - name: S3_REGION
+              value: {{ .Values.storage.s3.region | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.storage.s3.bucket | quote }}
+            - name: S3_FORCE_PATH_STYLE
+              value: {{ .Values.storage.s3.forcePathStyle | quote }}
+            - name: S3_PREFIX
+              value: {{ .Values.storage.s3.prefix | quote }}
+            {{- end }}
+            - name: AUTH_MODE
+              value: {{ .Values.auth.mode | quote }}
+            - name: ALLOW_SIGNUP
+              value: {{ .Values.auth.allowSignup | quote }}
+            - name: SESSION_TTL_HOURS
+              value: {{ .Values.auth.sessionTtlHours | quote }}
+            {{- with .Values.auth.admin.username }}
+            - name: ADMIN_USERNAME
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.appUrl }}
+            - name: APP_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if eq .Values.auth.mode "oidc" }}
+            - name: OIDC_ISSUER
+              value: {{ .Values.auth.oidc.issuer | quote }}
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.auth.oidc.clientId | quote }}
+            - name: OIDC_SCOPES
+              value: {{ .Values.auth.oidc.scopes | quote }}
+            - name: OIDC_ALLOWED_DOMAINS
+              value: {{ .Values.auth.oidc.allowedDomains | quote }}
+            - name: OIDC_ADMIN_CLAIM
+              value: {{ .Values.auth.oidc.adminClaim | quote }}
+            - name: OIDC_ADMIN_VALUE
+              value: {{ .Values.auth.oidc.adminValue | quote }}
+            - name: OIDC_PROVIDER_NAME
+              value: {{ .Values.auth.oidc.providerName | quote }}
+            {{- end }}
+            {{- if eq .Values.auth.mode "proxy" }}
+            - name: PROXY_USER_HEADER
+              value: {{ .Values.auth.proxy.userHeader | quote }}
+            - name: PROXY_EMAIL_HEADER
+              value: {{ .Values.auth.proxy.emailHeader | quote }}
+            - name: PROXY_NAME_HEADER
+              value: {{ .Values.auth.proxy.nameHeader | quote }}
+            {{- end }}
+            - name: FSRS_RETENTION
+              value: {{ .Values.fsrsRetention | quote }}
+            - name: MAX_UPLOAD_MB
+              value: {{ .Values.maxUploadMb | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          {{- if $volume }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "inquizitive.fullname" .) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
