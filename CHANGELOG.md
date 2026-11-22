@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0 - 2026-11-22
+
 ### Added
 
 - Study sets with folders, tags, archive and trash; an autosaving, keyboard-first editor with images, Markdown, LaTeX and code.
