@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.1 - 2026-11-22
+
+### Fixed
+
+- OIDC sign-in failed with `invalid_client` on providers that match redirect URIs exactly (such as Authentik): the token request sent the callback URL with a trailing slash.
+
 ## 0.1.0 - 2026-11-22
 
 ### Added
