@@ -7,12 +7,27 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!out",
+      "!dist",
+      "!build",
+      "!src-tauri/target",
+      "!src-tauri/gen",
+      "!public/sqlite",
+      "!services/db/migrations.gen.ts",
+      "!data",
+      "!playwright-report",
+      "!test-results"
+    ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
-    "indentWidth": 2
+    "indentWidth": 2,
+    "lineWidth": 100
   },
   "css": {
     "parser": {
@@ -22,7 +37,15 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "a11y": {
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["Switch", "Checkbox", "Input", "Textarea"]
+          }
+        }
+      }
     },
     "domains": {
       "next": "recommended",
@@ -34,6 +57,25 @@
       "source": {
         "organizeImports": "on"
       }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["components/ui/**"],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      }
+    }
+  ],
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
     }
   }
 }
