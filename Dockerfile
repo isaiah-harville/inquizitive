@@ -3,9 +3,12 @@
 # Data lives in /data by default (SQLite + images); point DATABASE_URL at
 # PostgreSQL and STORAGE_DRIVER=s3 at object storage to run several replicas.
 
-# The build output is plain JavaScript, so build once on the runner's own platform.
+# The build output is plain JavaScript, so build once on the runner's own
+# platform. Bun must come from that platform too, not the target's.
+FROM --platform=$BUILDPLATFORM oven/bun:1.4-alpine AS bun
+
 FROM --platform=$BUILDPLATFORM node:24-alpine AS build
-COPY --from=oven/bun:1.4-alpine /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json bun.lock ./
