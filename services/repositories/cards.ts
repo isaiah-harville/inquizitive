@@ -247,11 +247,19 @@ export async function reorderCards(
   setId: Id,
   orderedIds: readonly Id[],
 ): Promise<void> {
+  const at = now();
   await db.batch([
     ...orderedIds.map((id, i) =>
-      stmt('UPDATE flashcards SET position = ? WHERE id = ? AND set_id = ?', i + 1, id, setId),
+      stmt(
+        'UPDATE flashcards SET position = ?, updated_at = ? WHERE id = ? AND set_id = ? AND position <> ?',
+        i + 1,
+        at,
+        id,
+        setId,
+        i + 1,
+      ),
     ),
-    touchSet(setId, now()),
+    touchSet(setId, at),
   ]);
 }
 
@@ -294,6 +302,7 @@ export async function addCardMedia(
 ): Promise<Id> {
   const id = newId();
   await db.batch([
+    touchCard(flashcardId),
     stmt('DELETE FROM card_media WHERE flashcard_id = ? AND side = ?', flashcardId, side),
     stmt(
       'INSERT INTO card_media (id, flashcard_id, side, relative_path, mime_type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
@@ -313,10 +322,14 @@ export async function removeCardMedia(
   flashcardId: Id,
   side: CardSide,
 ): Promise<void> {
-  await db.execute('DELETE FROM card_media WHERE flashcard_id = ? AND side = ?', [
-    flashcardId,
-    side,
+  await db.batch([
+    touchCard(flashcardId),
+    stmt('DELETE FROM card_media WHERE flashcard_id = ? AND side = ?', flashcardId, side),
   ]);
+}
+
+function touchCard(id: Id): Stmt {
+  return stmt('UPDATE flashcards SET updated_at = ? WHERE id = ?', now(), id);
 }
 
 /** Is any card still using this media file? (files are shared by duplicated cards) */

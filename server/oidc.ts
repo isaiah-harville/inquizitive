@@ -7,11 +7,19 @@ export async function oidcConfig(): Promise<Configuration> {
   config ??= (async () => {
     const c = serverConfig();
     const client = await import('openid-client');
-    return client.discovery(
-      new URL(c.OIDC_ISSUER as string),
-      c.OIDC_CLIENT_ID as string,
-      c.OIDC_CLIENT_SECRET,
-    );
+    // Without a secret this is a public client: PKCE alone protects the code exchange.
+    return c.OIDC_CLIENT_SECRET
+      ? client.discovery(
+          new URL(c.OIDC_ISSUER as string),
+          c.OIDC_CLIENT_ID as string,
+          c.OIDC_CLIENT_SECRET,
+        )
+      : client.discovery(
+          new URL(c.OIDC_ISSUER as string),
+          c.OIDC_CLIENT_ID as string,
+          undefined,
+          client.None(),
+        );
   })();
   config.catch(() => {
     config = null;

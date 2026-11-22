@@ -84,6 +84,7 @@ jobs:
 
   docker:
     name: Container image
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

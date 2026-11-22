@@ -234,7 +234,7 @@ export function normalizeTags(names: readonly string[]): string[] {
   return [...seen.values()];
 }
 
-function tagStatements(setId: Id, names: readonly string[]): Stmt[] {
+export function tagStatements(setId: Id, names: readonly string[]): Stmt[] {
   return normalizeTags(names).flatMap((name) => [
     stmt(
       'INSERT INTO tags (id, name) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM tags WHERE lower(name) = lower(?))',
@@ -251,7 +251,9 @@ function tagStatements(setId: Id, names: readonly string[]): Stmt[] {
   ]);
 }
 
-const PRUNE_TAGS = stmt('DELETE FROM tags WHERE id NOT IN (SELECT tag_id FROM study_set_tags)');
+export const PRUNE_TAGS = stmt(
+  'DELETE FROM tags WHERE id NOT IN (SELECT tag_id FROM study_set_tags)',
+);
 
 export async function setTags(db: SqlDriver, setId: Id, names: readonly string[]): Promise<void> {
   await db.batch([
@@ -360,19 +362,29 @@ export async function duplicateSet(
 }
 
 export async function archiveSet(db: SqlDriver, id: Id, archived: boolean): Promise<void> {
-  await db.execute('UPDATE study_sets SET archived_at = ? WHERE id = ?', [
-    archived ? now() : null,
+  const at = now();
+  await db.execute('UPDATE study_sets SET archived_at = ?, updated_at = ? WHERE id = ?', [
+    archived ? at : null,
+    at,
     id,
   ]);
 }
 
 /** Move to trash (recoverable for TRASH_RETENTION_DAYS). */
 export async function trashSet(db: SqlDriver, id: Id): Promise<void> {
-  await db.execute('UPDATE study_sets SET deleted_at = ? WHERE id = ?', [now(), id]);
+  const at = now();
+  await db.execute('UPDATE study_sets SET deleted_at = ?, updated_at = ? WHERE id = ?', [
+    at,
+    at,
+    id,
+  ]);
 }
 
 export async function restoreSet(db: SqlDriver, id: Id): Promise<void> {
-  await db.execute('UPDATE study_sets SET deleted_at = NULL WHERE id = ?', [id]);
+  await db.execute('UPDATE study_sets SET deleted_at = NULL, updated_at = ? WHERE id = ?', [
+    now(),
+    id,
+  ]);
 }
 
 export async function listTrash(db: SqlDriver, userId: Id): Promise<StudySetSummary[]> {

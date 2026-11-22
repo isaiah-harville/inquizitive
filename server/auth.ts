@@ -2,6 +2,7 @@ import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'no
 import { promisify } from 'node:util';
 import type { User } from '@/domain/models';
 import type { SqlDriver } from '@/services/db/driver';
+import { insertApiToken, userIdForTokenHash } from '@/services/repositories/tokens';
 import * as users from '@/services/repositories/users';
 import { serverConfig } from './config';
 import { serverDb } from './db';
@@ -165,8 +166,31 @@ async function bootstrapAdmin(db: SqlDriver) {
 }
 
 /** The signed-in user for this request, or null. */
+export const TOKEN_PREFIX = 'iqz_';
+
+export function bearerToken(req: Request): string | null {
+  const header = req.headers.get('authorization') ?? '';
+  const match = /^Bearer\s+(\S+)$/i.exec(header);
+  return match ? match[1] : null;
+}
+
+/** Create a device token for sync; only its hash is stored, so it is shown once. */
+export async function issueApiToken(
+  userId: string,
+  name: string,
+): Promise<{ id: string; token: string }> {
+  const token = `${TOKEN_PREFIX}${randomBytes(32).toString('base64url')}`;
+  const id = await insertApiToken(await serverDb(), userId, name, sha256(token));
+  return { id, token };
+}
+
 export async function currentUser(req: Request): Promise<User | null> {
   const db = await serverDb();
+  const bearer = bearerToken(req);
+  if (bearer) {
+    const userId = await userIdForTokenHash(db, sha256(bearer));
+    return userId ? users.getUser(db, userId) : null;
+  }
   const mode = serverConfig().AUTH_MODE;
   if (mode === 'none') return users.getUser(db, users.LOCAL_USER_ID);
   if (mode === 'proxy') return proxyUser(db, req);
