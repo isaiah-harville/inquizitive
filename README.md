@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inquizitive
 
-## Getting Started
+**An open-source, offline-first study app.** Make flashcard sets, study them five
+ways, and remember them for good with spaced repetition. No accounts, no
+subscriptions, no tracking.
 
-First, run the development server:
+Run it as a **desktop app** (your library is a SQLite file on your computer), or
+**host it for a school or university** (Docker / Kubernetes) with pluggable
+storage and single sign-on.
+
+- **Study modes:** Flashcards · Learn (adaptive, round-based mastery) · Practice tests ·
+  Match (timed game) · Spaced review (FSRS)
+- **Fast authoring:** autosaving editor, keyboard-first (`Tab` / `Ctrl+Enter`),
+  drag-to-reorder, bulk edit, images, Markdown, LaTeX and code
+- **Import anything:** paste text and choose how terms and cards are separated
+  (tab, comma, dash, custom…), CSV/TSV with column mapping, or full library archives
+- **Own your data:** export a set or your whole library (with images and history) to a
+  versioned ZIP; restore without ever overwriting
+- **Search, folders, tags, stats, streaks, light and dark themes**
+
+## Quick start
+
+### Desktop app
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run desktop:dev        # development window with hot reload
+bun run desktop:build      # release bundle in src-tauri/target/release/bundle/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires [Bun](https://bun.sh), [Rust](https://rustup.rs) and the
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your OS.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Self-hosted server (single container)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker build -t inquizitive .
+docker run -d -p 3000:3000 -v inquizitive-data:/data inquizitive
+```
 
-## Learn More
+Open <http://localhost:3000>. The first account you create becomes the administrator.
 
-To learn more about Next.js, take a look at the following resources:
+### Self-hosted server (PostgreSQL + S3, scalable)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For Kubernetes there's a Helm chart in [`chart/inquizitive`](chart/inquizitive).
+Configuration, auth providers and scaling are covered in
+[docs/self-hosting.md](docs/self-hosting.md).
 
-## Deploy on Vercel
+### Web development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+bun install
+bun run dev                # http://localhost:3000 (server mode, SQLite in ./data)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+
+| | |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | How the pieces fit: domain, API, storage drivers, platforms |
+| [docs/development.md](docs/development.md) | Local setup, testing, building and packaging |
+| [docs/self-hosting.md](docs/self-hosting.md) | Docker, Kubernetes, PostgreSQL, S3, OIDC / SSO |
+| [docs/data-format.md](docs/data-format.md) | Import formats and the portable archive format |
+| [docs/adr/](docs/adr) | Architecture decision records |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [examples/](examples) | Sample files to try the importer with |
+
+## Privacy
+
+Inquizitive makes no network requests of its own: no telemetry, analytics, CDNs or
+remote fonts. Imported content is rendered safely: raw HTML is never executed, and
+external images or links in cards are never loaded. The end-to-end tests fail if the
+app tries to reach any host other than itself.
+
+## Known limitations
+
+- **Desktop UI automation:** the desktop bundle has been built, launched and checked
+  to open its database, but the UI flows are tested end to end in the web build
+  (the same code). Adding `tauri-driver` WebDriver tests on Linux/Windows CI would
+  close that gap.
+- **Nested folders:** the schema supports `parent_id`; the UI shows one level.
+- **Passwords:** users can't change their own password yet (admins can reset it).
+- **Image editing:** one image per card side; no cropping or occlusion.
+- **Sync** between desktop and server isn't implemented. You can move data with
+  archive export and import, in both directions.
+- **Rate limiting** of sign-in attempts should be done at the reverse proxy or ingress
+  for now.
+- **Accessibility:** keyboard navigation and labels throughout; a full screen-reader
+  audit is still to do.
+
+## License
+
+[MIT](LICENSE)
