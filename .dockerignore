@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+out
+data
+src-tauri/target
+src-tauri/gen
+test-results
+playwright-report
+.env*
+!.env.example
+*.log

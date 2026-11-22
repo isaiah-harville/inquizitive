@@ -1,0 +1,119 @@
+# Inquizitive Helm chart.
+#
+# Two ways to run it:
+#  * Single replica with SQLite + images on a PersistentVolume (default; simple).
+#  * Several replicas: set database.url to PostgreSQL and storage.driver=s3,
+#    then raise replicaCount (and optionally enable the autoscaler).
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/inquizitive/inquizitive
+  tag: ""            # defaults to the chart appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Public URL (needed for OIDC and secure cookies), e.g. https://study.example.edu
+appUrl: ""
+
+database:
+  # Empty = SQLite on the persistent volume (single replica only).
+  # postgres://user:pass@host:5432/inquizitive for clustered deployments.
+  url: ""
+  # Or read the URL from an existing secret (key: DATABASE_URL).
+  existingSecret: ""
+  poolSize: 10
+
+storage:
+  driver: fs           # fs | s3
+  s3:
+    endpoint: ""
+    region: us-east-1
+    bucket: inquizitive
+    forcePathStyle: true
+    prefix: ""
+    accessKeyId: ""
+    secretAccessKey: ""
+    # Or an existing secret with S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY.
+    existingSecret: ""
+
+auth:
+  mode: local          # none | local | oidc | proxy
+  allowSignup: false
+  sessionTtlHours: 336
+  admin:
+    username: ""
+    password: ""
+  oidc:
+    issuer: ""
+    clientId: ""
+    clientSecret: ""
+    scopes: "openid profile email"
+    allowedDomains: ""
+    adminClaim: groups
+    adminValue: ""
+    providerName: "School account"
+  proxy:
+    userHeader: x-forwarded-user
+    emailHeader: x-forwarded-email
+    nameHeader: x-forwarded-preferred-username
+  # Existing secret with ADMIN_PASSWORD / OIDC_CLIENT_SECRET (overrides the values above).
+  existingSecret: ""
+
+fsrsRetention: 0.9
+maxUploadMb: 10
+
+# Extra environment variables
+env: []
+
+persistence:
+  # Holds the SQLite database and/or local images. Not needed with Postgres + S3.
+  enabled: true
+  size: 5Gi
+  storageClass: ""
+  accessModes: [ReadWriteOnce]
+  existingClaim: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: study.example.edu
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 101
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: [ALL]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}
