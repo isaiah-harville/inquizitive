@@ -19,7 +19,7 @@ at startup under a PostgreSQL advisory lock, so replicas can start together.
 Every release publishes:
 
 - `ghcr.io/isaiah-harville/inquizitive:<version>` (also `latest`, `<major>.<minor>`), for amd64 and arm64.
-  Every push to `main` publishes `:main` and `:sha-<commit>`.
+  Images are built only for version tags (`v*`), not for every push to `main`.
 - The Helm chart at `oci://ghcr.io/isaiah-harville/charts/inquizitive`.
 - Desktop builds for macOS, Windows and Linux on the GitHub release.
 
